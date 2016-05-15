@@ -1,0 +1,41 @@
+name:                reesd-client
+version:             0.0.0
+Cabal-Version:       >= 1.8
+synopsis:            Official command-line client for Reesd.
+description:         Official command-line client for Reesd.
+category:            System
+license:             BSD2
+license-file:        LICENSE
+author:              Vo Minh Thu
+maintainer:          thu@hypered.io
+build-type:          Simple
+homepage:            https://github.com/hypered/reesd-client
+
+source-repository head
+  type: git
+  location: git://github.com/hypered/reesd-client.git
+
+library
+  build-depends:
+                       base == 4.*,
+                       cmdargs,
+                       process
+  exposed-modules:     Reesd.Client.Commands.Images
+  other-modules:       Paths_reesd_client
+  ghc-options:         -Wall
+
+executable rd
+  hs-source-dirs:      bin
+  main-is:             rd.hs
+  build-depends:       base == 4.*,
+                       cmdargs,
+                       reesd-client
+  ghc-options:         -Wall
+
+executable rd-images
+  hs-source-dirs:      bin
+  main-is:             rd-images.hs
+  build-depends:       base == 4.*,
+                       cmdargs,
+                       reesd-client
+  ghc-options:         -Wall
