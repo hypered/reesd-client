@@ -80,7 +80,7 @@ usersStatus = CmdStatus
 -- | Call `reesd-admin` through SSH.
 callAdmin command = do
   (_, _, _, h) <- createProcess
-    (proc "ssh" ["rdadmin@reesd.dev", "reesd-admin", "users", command])
+    (proc "ssh" ["rd@reesd.dev", "reesd-command", "users", command])
   waitForProcess h
   return ()
 
