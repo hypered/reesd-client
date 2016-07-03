@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
--- | cmdargs definitions for the `rd-images` executable.
-module Reesd.Client.Commands.Images where
+-- | cmdargs definitions for the `rd-users` executable.
+module Reesd.Client.Commands.Users where
 
 import Data.Version (showVersion)
 import Paths_reesd_client (version)
 import System.Console.CmdArgs.Explicit
-  ( flagHelpSimple, flagVersion, helpText, modeArgs, modeEmpty, modeGroupFlags
-  , modeHelp, modes, toGroup
+  ( flagArg, flagHelpSimple, flagVersion, helpText, mode, modeArgs
+  , modeEmpty, modeGroupFlags, modeHelp, modes, toGroup
   , Flag, Help, HelpFormat(..), Mode(..), Name
   )
 import System.Process (createProcess, proc, waitForProcess)
@@ -18,13 +18,13 @@ import System.Process (createProcess, proc, waitForProcess)
 -- | String with the program name, version and copyright.
 versionString :: String
 versionString =
-  "rd-images " ++ showVersion version ++ " - Copyright 2016 Hypered SPRL."
+  "rd-users " ++ showVersion version ++ " - Copyright 2016 Hypered SPRL."
 
 
 ------------------------------------------------------------------------------
 -- | Process the command-line choice.
 processCmd :: Cmd -> IO ()
-processCmd Help = print (helpText [] HelpFormatDefault imagesModes)
+processCmd Help = print (helpText [] HelpFormatDefault usersModes)
 
 processCmd Version = putStrLn versionString
 
@@ -32,25 +32,26 @@ processCmd None = do
   processCmd Version
   processCmd Help
 
-processCmd CmdList{..} = call "list"
+processCmd CmdCreate{..} = callAdmin "create"
 
-processCmd CmdStatus{..} = call "status"
+processCmd CmdStatus{..} = callAdmin "status"
 
 
 ------------------------------------------------------------------------------
 -- | Data type representing the different command-line subcommands.
 data Cmd =
     CmdList
+  | CmdCreate { cmdLogin :: String }
   | CmdStatus
   | Help
   | Version
   | None
   deriving Show
 
-imagesModes :: Mode Cmd
-imagesModes = (modes "images" None "Docker repositories related subcommands."
-  [ imagesListMode
-  , imagesStatusMode
+usersModes :: Mode Cmd
+usersModes = (modes "users" None "Users related subcommands."
+  [ usersCreateMode
+  , usersStatusMode
   ])
   { modeGroupFlags = toGroup
     [ flagHelpSimple (const Help)
@@ -58,29 +59,30 @@ imagesModes = (modes "images" None "Docker repositories related subcommands."
     ]
   }
 
-imagesListMode :: Mode Cmd
-imagesListMode = mode' "list" imagesList
-  "Display a list of repositories."
+usersCreateMode :: Mode Cmd
+usersCreateMode = mode "create" usersCreate
+  "Create a user."
+  (flagArg setLogin "LOGIN")
+  []
+  where setLogin x r = Right (r { cmdLogin = x })
+
+usersStatusMode :: Mode Cmd
+usersStatusMode = mode' "status" usersStatus
+  "Display the user status."
   []
 
-imagesStatusMode :: Mode Cmd
-imagesStatusMode = mode' "status" imagesStatus
-  "Display a list of repositories being updated."
-  []
+usersCreate = CmdCreate ""
 
-imagesList = CmdList
-
-imagesStatus = CmdStatus
+usersStatus = CmdStatus
 
 
 ------------------------------------------------------------------------------
--- | Call `reesd-command` through SSH.
-call command = do
+-- | Call `reesd-admin` through SSH.
+callAdmin command = do
   (_, _, _, h) <- createProcess
-    (proc "ssh" ["rd@reesd.dev", "reesd-command", "images", command])
+    (proc "ssh" ["rdadmin@reesd.dev", "reesd-admin", "users", command])
   waitForProcess h
   return ()
-
 
 
 ------------------------------------------------------------------------------

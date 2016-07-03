@@ -10,6 +10,8 @@ import System.Console.CmdArgs.Explicit
 import System.Environment (getProgName)
 
 import qualified Reesd.Client.Commands.Images as Images
+import qualified Reesd.Client.Commands.Users as Users
+import qualified Reesd.Client.Commands.Workflows as Workflows
 
 
 ------------------------------------------------------------------------------
@@ -20,6 +22,8 @@ main = do
     "rd"            -> processArgs allModes
     "<interactive>" -> processArgs allModes      -- For ghci.
     "rd-images"     -> processArgs imagesModes
+    "rd-users"      -> processArgs usersModes
+    "rd-workflows"  -> processArgs workflowsModes
     _ -> return UnkownProgramName
   processCmd cmd
 
@@ -31,6 +35,8 @@ versionString =
 
 allModes = (modes "rd" None "Command-line client for Reesd."
   [ imagesModes
+  , usersModes -- TODO Display in --help only if some configuration says admin=yes.
+  , workflowsModes
   ])
   { modeGroupFlags = toGroup
     [ flagHelpSimple (const Help)
@@ -43,6 +49,8 @@ allModes = (modes "rd" None "Command-line client for Reesd."
 -- | Process the command-line choice.
 processCmd :: Cmd -> IO ()
 processCmd (Images cmd) = Images.processCmd cmd
+processCmd (Users cmd) = Users.processCmd cmd
+processCmd (Workflows cmd) = Workflows.processCmd cmd
 
 processCmd Help = print (helpText [] HelpFormatDefault allModes)
 
@@ -63,6 +71,8 @@ processCmd UnkownProgramName = do
 -- | Available commands.
 data Cmd =
     Images { getImages :: Images.Cmd }
+  | Users { getUsers :: Users.Cmd }
+  | Workflows { getWorkflows :: Workflows.Cmd }
   | Help
   | Version
   | None
@@ -71,3 +81,9 @@ data Cmd =
 
 imagesModes :: Mode Cmd
 imagesModes = remap2 Images getImages Images.imagesModes { modeNames = ["images"] }
+
+usersModes :: Mode Cmd
+usersModes = remap2 Users getUsers Users.usersModes { modeNames = ["users"] }
+
+workflowsModes :: Mode Cmd
+workflowsModes = remap2 Workflows getWorkflows Workflows.workflowsModes { modeNames = ["workflows"] }
