@@ -7,11 +7,12 @@ module Reesd.Client.Commands.Users where
 import Data.Version (showVersion)
 import Paths_reesd_client (version)
 import System.Console.CmdArgs.Explicit
-  ( flagArg, flagHelpSimple, flagVersion, helpText, mode, modeArgs
-  , modeEmpty, modeGroupFlags, modeHelp, modes, toGroup
-  , Flag, Help, HelpFormat(..), Mode(..), Name
+  ( flagHelpSimple, flagReq, flagVersion, helpText
+  , modeGroupFlags, modes, toGroup
+  , HelpFormat(..), Mode(..)
   )
-import System.Process (createProcess, proc, waitForProcess)
+
+import Reesd.Client.Helpers (call, call', mode')
 
 
 ------------------------------------------------------------------------------
@@ -32,16 +33,24 @@ processCmd None = do
   processCmd Version
   processCmd Help
 
-processCmd CmdCreate{..} = callAdmin "create"
+processCmd CmdCreate{..} = do
+  case cmdPublicKeyPath of
+    Nothing -> call "users" "create" ["--login", cmdLogin, "--email", cmdEmail]
+    Just path -> do
+      content <- readFile path
+      call' "users" "create" ["--login", cmdLogin, "--email", cmdEmail, "--public-key", "-"] content
 
-processCmd CmdStatus{..} = callAdmin "status"
+processCmd CmdStatus{..} = call "users" "status" []
 
 
 ------------------------------------------------------------------------------
 -- | Data type representing the different command-line subcommands.
 data Cmd =
-    CmdList
-  | CmdCreate { cmdLogin :: String }
+    CmdCreate
+    { cmdLogin :: String
+    , cmdEmail :: String
+    , cmdPublicKeyPath :: Maybe String
+    }
   | CmdStatus
   | Help
   | Version
@@ -60,37 +69,29 @@ usersModes = (modes "users" None "Users related subcommands."
   }
 
 usersCreateMode :: Mode Cmd
-usersCreateMode = mode "create" usersCreate
+usersCreateMode = mode' "create" usersCreate
   "Create a user."
-  (flagArg setLogin "LOGIN")
-  []
-  where setLogin x r = Right (r { cmdLogin = x })
+  [flagReq ["login"]
+      (\x r -> Right (r { cmdLogin = x }))
+      "STRING"
+      "User login"
+  , flagReq ["email"]
+      (\x r -> Right (r { cmdEmail = x }))
+      "STRING"
+      "User email."
+  , flagReq ["public-key"]
+      (\x r -> Right (r { cmdPublicKeyPath = Just x }))
+      "PATH"
+      "Path to a public SSH key."
+  ]
 
 usersStatusMode :: Mode Cmd
 usersStatusMode = mode' "status" usersStatus
   "Display the user status."
   []
 
-usersCreate = CmdCreate ""
+usersCreate :: Cmd
+usersCreate = CmdCreate "" "" Nothing
 
+usersStatus :: Cmd
 usersStatus = CmdStatus
-
-
-------------------------------------------------------------------------------
--- | Call `reesd-admin` through SSH.
-callAdmin command = do
-  (_, _, _, h) <- createProcess
-    (proc "ssh" ["rd@reesd.dev", "reesd-command", "users", command])
-  waitForProcess h
-  return ()
-
-
-------------------------------------------------------------------------------
--- | Same as `mode` but without an `Arg a` argument.
-mode' :: Name -> a -> Help -> [Flag a] -> Mode a
-mode' name value help flags = (modeEmpty value)
-  { modeNames = [name]
-  , modeHelp = help
-  , modeArgs = ([], Nothing)
-  , modeGroupFlags = toGroup flags
-  }

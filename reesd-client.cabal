@@ -21,8 +21,10 @@ library
                        cmdargs,
                        process
   exposed-modules:     Reesd.Client.Commands.Images,
+                       Reesd.Client.Commands.Sentinel,
                        Reesd.Client.Commands.Users,
-                       Reesd.Client.Commands.Workflows
+                       Reesd.Client.Commands.Workflows,
+                       Reesd.Client.Helpers
   other-modules:       Paths_reesd_client
   ghc-options:         -Wall
 
@@ -53,6 +55,14 @@ executable rd-users
 executable rd-workflows
   hs-source-dirs:      bin
   main-is:             rd-workflows.hs
+  build-depends:       base == 4.*,
+                       cmdargs,
+                       reesd-client
+  ghc-options:         -Wall
+
+executable sntnl
+  hs-source-dirs:      bin
+  main-is:             sntnl.hs
   build-depends:       base == 4.*,
                        cmdargs,
                        reesd-client

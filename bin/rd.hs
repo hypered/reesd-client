@@ -24,6 +24,8 @@ main = do
     "rd-images"     -> processArgs imagesModes
     "rd-users"      -> processArgs usersModes
     "rd-workflows"  -> processArgs workflowsModes
+    -- TODO Implement the following and rd-sentinel.hs.
+    -- "rd-sentinel" -> processArgs sentinelModes
     _ -> return UnkownProgramName
   processCmd cmd
 
@@ -33,6 +35,7 @@ versionString :: String
 versionString =
   "rd " ++ showVersion version ++ " - Copyright 2016 Hypered SPRL."
 
+allModes :: Mode Cmd
 allModes = (modes "rd" None "Command-line client for Reesd."
   [ imagesModes
   , usersModes -- TODO Display in --help only if some configuration says admin=yes.

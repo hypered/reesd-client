@@ -7,11 +7,12 @@ module Reesd.Client.Commands.Images where
 import Data.Version (showVersion)
 import Paths_reesd_client (version)
 import System.Console.CmdArgs.Explicit
-  ( flagHelpSimple, flagVersion, helpText, modeArgs, modeEmpty, modeGroupFlags
-  , modeHelp, modes, toGroup
-  , Flag, Help, HelpFormat(..), Mode(..), Name
+  ( flagHelpSimple, flagVersion, helpText, modeGroupFlags
+  , modes, toGroup
+  , HelpFormat(..), Mode(..)
   )
-import System.Process (createProcess, proc, waitForProcess)
+
+import Reesd.Client.Helpers (call, mode')
 
 
 ------------------------------------------------------------------------------
@@ -32,9 +33,9 @@ processCmd None = do
   processCmd Version
   processCmd Help
 
-processCmd CmdList{..} = call "list"
+processCmd CmdList{..} = call "images" "list" []
 
-processCmd CmdStatus{..} = call "status"
+processCmd CmdStatus{..} = call "images" "status" []
 
 
 ------------------------------------------------------------------------------
@@ -68,27 +69,8 @@ imagesStatusMode = mode' "status" imagesStatus
   "Display a list of repositories being updated."
   []
 
+imagesList :: Cmd
 imagesList = CmdList
 
+imagesStatus :: Cmd
 imagesStatus = CmdStatus
-
-
-------------------------------------------------------------------------------
--- | Call `reesd-command` through SSH.
-call command = do
-  (_, _, _, h) <- createProcess
-    (proc "ssh" ["rd@reesd.dev", "reesd-command", "images", command])
-  waitForProcess h
-  return ()
-
-
-
-------------------------------------------------------------------------------
--- | Same as `mode` but without an `Arg a` argument.
-mode' :: Name -> a -> Help -> [Flag a] -> Mode a
-mode' name value help flags = (modeEmpty value)
-  { modeNames = [name]
-  , modeHelp = help
-  , modeArgs = ([], Nothing)
-  , modeGroupFlags = toGroup flags
-  }
