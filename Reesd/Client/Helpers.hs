@@ -7,11 +7,6 @@ import System.Console.CmdArgs.Explicit
   )
 import System.Process (createProcess, proc, readProcess, waitForProcess)
 
--- TODO Document the following bits:
--- Using admin.reesd.com instead of reesd.com is useful for .ssh/config with
--- IdentityFile + IdentitiesOnly, but has otherwise no other purpose.
--- admin.reesd.com should be a CNAME for reesd.com.
-
 
 ------------------------------------------------------------------------------
 -- | Call `reesd-command` through SSH.
@@ -25,7 +20,7 @@ call command subcommand args = do
 callFor :: String -> String -> String -> [String] -> IO ()
 callFor user command subcommand args = do
   (_, _, _, h) <- createProcess
-    (proc "ssh" (["rdadmin@admin.reesd.dev", "reesd-admin", "--for", user, command, subcommand] ++ args))
+    (proc "ssh" (["rdadmin@reesd.dev", "reesd-admin", "--for", user, command, subcommand] ++ args))
   _ <- waitForProcess h
   return ()
 
@@ -40,7 +35,7 @@ call' command subcommand args input = do
 callFor' :: String -> String -> String -> [String] -> String -> IO ()
 callFor' user command subcommand args input = do
   out <- readProcess
-    "ssh" (["rdadmin@admin.reesd.dev", "reesd-admin", "--for", user, command, subcommand] ++ args)
+    "ssh" (["rdadmin@reesd.dev", "reesd-admin", "--for", user, command, subcommand] ++ args)
     input
   putStr out
   return ()
