@@ -10,32 +10,32 @@ import System.Process (createProcess, proc, readProcess, waitForProcess)
 
 ------------------------------------------------------------------------------
 -- | Call `reesd-command` through SSH.
-call :: String -> String -> [String] -> IO ()
-call command subcommand args = do
+call :: String -> String -> String -> [String] -> IO ()
+call domain command subcommand args = do
   (_, _, _, h) <- createProcess
-    (proc "ssh" (["rd@reesd.dev", "reesd-command", command, subcommand] ++ args))
+    (proc "ssh" (["rd@" ++ domain, "reesd-command", command, subcommand] ++ args))
   _ <- waitForProcess h
   return ()
 
-callFor :: String -> String -> String -> [String] -> IO ()
-callFor user command subcommand args = do
+callFor :: String -> String -> String -> String -> [String] -> IO ()
+callFor user domain command subcommand args = do
   (_, _, _, h) <- createProcess
-    (proc "ssh" (["rdadmin@reesd.dev", "reesd-admin", "--for", user, command, subcommand] ++ args))
+    (proc "ssh" (["rdadmin@" ++ domain, "reesd-admin", "--for", user, command, subcommand] ++ args))
   _ <- waitForProcess h
   return ()
 
-call' :: String -> String -> [String] -> String -> IO ()
-call' command subcommand args input = do
+call' :: String -> String -> String -> [String] -> String -> IO ()
+call' domain command subcommand args input = do
   out <- readProcess
-    "ssh" (["rd@reesd.dev", "reesd-command", command, subcommand] ++ args)
+    "ssh" (["rd@" ++ domain, "reesd-command", command, subcommand] ++ args)
     input
   putStr out
   return ()
 
-callFor' :: String -> String -> String -> [String] -> String -> IO ()
-callFor' user command subcommand args input = do
+callFor' :: String -> String -> String -> String -> [String] -> String -> IO ()
+callFor' user domain command subcommand args input = do
   out <- readProcess
-    "ssh" (["rdadmin@reesd.dev", "reesd-admin", "--for", user, command, subcommand] ++ args)
+    "ssh" (["rdadmin@" ++ domain, "reesd-admin", "--for", user, command, subcommand] ++ args)
     input
   putStr out
   return ()

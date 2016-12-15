@@ -33,22 +33,22 @@ processCmd None = do
   processCmd Version
   processCmd Help
 
-processCmd CmdInstances{..} = call "workflows" "instances" ["--sentinel"]
+processCmd CmdInstances{..} = call cmdDomain "workflows" "instances" ["--sentinel"]
 
-processCmd CmdInstanciate{..} = call "workflows" "instanciate" ["--title", cmdTitle, "sentinel"] -- TODO Multi-words titles are broken: only first word is in db.
+processCmd CmdInstanciate{..} = call cmdDomain "workflows" "instanciate" ["--title", cmdTitle, "sentinel"] -- TODO Multi-words titles are broken: only first word is in db.
 
-processCmd CmdStep{..} = call "workflows" "step" args
+processCmd CmdStep{..} = call cmdDomain "workflows" "step" args
   where
   -- TODO Use the secret string instead of an ID.
-  args = ["--walk", show cmdWalkId, "--activity", "wait-get"]
+  args = ["--walk", show cmdWalkId, "--activity", "*wait-get"]
 
 
 ------------------------------------------------------------------------------
 -- | Data type representing the different command-line subcommands.
 data Cmd =
-    CmdInstances
-  | CmdInstanciate { cmdTitle :: String }
-  | CmdStep { cmdWalkId :: Int }
+    CmdInstances { cmdDomain ::  String }
+  | CmdInstanciate { cmdDomain :: String, cmdTitle :: String }
+  | CmdStep { cmdDomain :: String, cmdWalkId :: Int }
   | Help
   | Version
   | None
@@ -69,27 +69,34 @@ sentinelModes = (modes "sentinel" None "Sentinels related subcommands."
 sentinelInstancesMode :: Mode Cmd
 sentinelInstancesMode = mode' "list" sentinelInstances
   "Display sentinels."
-  []
+  [flagDomain]
 
 sentinelInstanciateMode :: Mode Cmd
 sentinelInstanciateMode = mode "new" sentinelInstanciate
   "Create a new sentinel."
   (flagArg setTitle "TITLE")
-  []
+  [flagDomain]
   where setTitle x r = Right (r { cmdTitle = x })
 
 sentinelStepMode :: Mode Cmd
 sentinelStepMode = mode "poke" sentinelStep
   "Send a check-in to a sentinel."
   (flagArg setWalkId "ID")
-  []
+  [flagDomain]
   where setWalkId x r = Right (r { cmdWalkId = read x }) -- TODO Left if not an ID.
 
 sentinelInstances :: Cmd
-sentinelInstances = CmdInstances
+sentinelInstances = CmdInstances { cmdDomain = "reesd.com" }
 
 sentinelInstanciate :: Cmd
-sentinelInstanciate = CmdInstanciate { cmdTitle = "" }
+sentinelInstanciate = CmdInstanciate { cmdDomain = "reesd.com", cmdTitle = "" }
 
 sentinelStep :: Cmd
-sentinelStep = CmdStep { cmdWalkId = 0 }
+sentinelStep = CmdStep { cmdDomain = "reesd.com", cmdWalkId = 0 }
+
+
+------------------------------------------------------------------------------
+flagDomain = flagReq ["domain"]
+  (\x r -> Right (r { cmdDomain = x }))
+  "DOMAIN"
+  "Domain to use, default to reesd.com."

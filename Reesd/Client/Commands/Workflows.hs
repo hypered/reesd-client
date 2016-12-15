@@ -33,22 +33,23 @@ processCmd None = do
   processCmd Version
   processCmd Help
 
-processCmd CmdList{..} = (maybe call callFor cmdForUser) "workflows" "list" []
+processCmd CmdList{..} = (maybe call callFor cmdForUser) "reesd.dev" "workflows" "list" []
 
 processCmd CmdAdd{..} = do
   content <- readFile cmdDefinitionPath
   (maybe call' callFor' cmdForUser)
-    "workflows" "add"
+    "reesd.dev" "workflows" "add"
     ["-"] content
 
 processCmd CmdInstances{..} = (maybe call callFor cmdForUser)
-  "workflows" "instances" (if cmdSentinelsOnly then ["--sentinel"] else [])
+  "reesd.dev" "workflows" "instances"
+  (if cmdSentinelsOnly then ["--sentinel"] else [])
 
 processCmd CmdInstanciate{..} = (maybe call callFor cmdForUser)
-  "workflows" "instanciate" [cmdWorkflow]
+  "reesd.dev" "workflows" "instanciate" [cmdWorkflow]
 
 processCmd CmdStep{..} = (maybe call callFor cmdForUser)
-  "workflows" "step" args
+  "reesd.dev" "workflows" "step" args
   where
   args =
     ["--walk", show cmdWalkId, "--activity", cmdActivity]
@@ -56,7 +57,7 @@ processCmd CmdStep{..} = (maybe call callFor cmdForUser)
     -- TODO cmdResult
 
 processCmd CmdStatus{..} = call
-  "workflows" "status" []
+  "reesd.dev" "workflows" "status" []
 
 
 ------------------------------------------------------------------------------

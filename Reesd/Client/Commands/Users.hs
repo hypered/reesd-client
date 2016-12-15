@@ -35,12 +35,12 @@ processCmd None = do
 
 processCmd CmdCreate{..} = do
   case cmdPublicKeyPath of
-    Nothing -> call "users" "create" ["--login", cmdLogin, "--email", cmdEmail]
+    Nothing -> call "reesd.dev" "users" "create" ["--login", cmdLogin, "--email", cmdEmail]
     Just path -> do
       content <- readFile path
-      call' "users" "create" ["--login", cmdLogin, "--email", cmdEmail, "--public-key", "-"] content
+      call' "reesd.dev" "users" "create" ["--login", cmdLogin, "--email", cmdEmail, "--public-key", "-"] content
 
-processCmd CmdStatus{..} = call "users" "status" []
+processCmd CmdStatus{..} = call "reesd.dev" "users" "status" []
 
 
 ------------------------------------------------------------------------------
