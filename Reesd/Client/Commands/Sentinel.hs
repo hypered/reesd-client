@@ -4,6 +4,7 @@
 -- | cmdargs definitions for the `rd-sentinel` and `sntnl` executable.
 module Reesd.Client.Commands.Sentinel where
 
+import Data.List (intercalate)
 import Data.Version (showVersion)
 import Paths_reesd_client (version)
 import System.Console.CmdArgs.Explicit
@@ -25,7 +26,7 @@ versionString =
 ------------------------------------------------------------------------------
 -- | Process the command-line choice.
 processCmd :: Cmd -> IO ()
-processCmd Help = print (helpText [] HelpFormatDefault sentinelModes)
+processCmd Help = print (helpText [] HelpFormatDefault (sentinelModes Nothing))
 
 processCmd Version = putStrLn versionString
 
@@ -35,12 +36,18 @@ processCmd None = do
 
 processCmd CmdInstances{..} = call cmdDomain "workflows" "instances" ["--sentinel"]
 
-processCmd CmdInstanciate{..} = call cmdDomain "workflows" "instanciate" ["--title", cmdTitle, "sentinel"] -- TODO Multi-words titles are broken: only first word is in db.
+processCmd CmdInstanciate{..} = call cmdDomain "workflows" "instanciate" args
+  -- TODO Disallow + and other characters in the title.
+  where title = intercalate "+" (words cmdTitle)
+        args = (if null title then [] else ["--title", title]) ++ ["sentinel"]
 
 processCmd CmdStep{..} = call cmdDomain "workflows" "step" args
   where
-  -- TODO Use the secret string instead of an ID.
   args = ["--walk", show cmdWalkId, "--activity", "*wait-get"]
+
+processCmd CmdDelete{..} = call cmdDomain "workflows" "delete" args
+  where
+  args = ["--walk", show cmdWalkId]
 
 
 ------------------------------------------------------------------------------
@@ -49,54 +56,68 @@ data Cmd =
     CmdInstances { cmdDomain ::  String }
   | CmdInstanciate { cmdDomain :: String, cmdTitle :: String }
   | CmdStep { cmdDomain :: String, cmdWalkId :: Int }
+  | CmdDelete { cmdDomain :: String, cmdWalkId :: Int }
   | Help
   | Version
   | None
   deriving Show
 
-sentinelModes :: Mode Cmd
-sentinelModes = (modes "sentinel" None "Sentinels related subcommands."
-  [ sentinelInstancesMode
-  , sentinelInstanciateMode
-  , sentinelStepMode
+sentinelModes :: Maybe String -> Mode Cmd
+sentinelModes mdomain = (modes "sentinel" None "Sentinels related subcommands."
+  [ sentinelInstancesMode domain
+  , sentinelInstanciateMode domain
+  , sentinelStepMode domain
+  , sentinelDeleteMode domain
   ])
   { modeGroupFlags = toGroup
     [ flagHelpSimple (const Help)
     , flagVersion (const Version)
     ]
   }
+  where domain = maybe "sntnl.co" id mdomain
 
-sentinelInstancesMode :: Mode Cmd
-sentinelInstancesMode = mode' "list" sentinelInstances
+sentinelInstancesMode :: String -> Mode Cmd
+sentinelInstancesMode domain = mode' "list" (sentinelInstances domain)
   "Display sentinels."
   [flagDomain]
 
-sentinelInstanciateMode :: Mode Cmd
-sentinelInstanciateMode = mode "new" sentinelInstanciate
+sentinelInstanciateMode :: String -> Mode Cmd
+sentinelInstanciateMode domain = mode "new" (sentinelInstanciate domain)
   "Create a new sentinel."
   (flagArg setTitle "TITLE")
   [flagDomain]
   where setTitle x r = Right (r { cmdTitle = x })
 
-sentinelStepMode :: Mode Cmd
-sentinelStepMode = mode "poke" sentinelStep
+sentinelStepMode :: String -> Mode Cmd
+sentinelStepMode domain = mode "poke" (sentinelStep domain)
   "Send a check-in to a sentinel."
   (flagArg setWalkId "ID")
   [flagDomain]
   where setWalkId x r = Right (r { cmdWalkId = read x }) -- TODO Left if not an ID.
 
-sentinelInstances :: Cmd
-sentinelInstances = CmdInstances { cmdDomain = "reesd.com" }
+sentinelDeleteMode :: String -> Mode Cmd
+sentinelDeleteMode domain = mode "delete" (sentinelDelete domain)
+  "Delete a sentinel."
+  (flagArg setWalkId "ID")
+  [flagDomain]
+  where setWalkId x r = Right (r { cmdWalkId = read x }) -- TODO Left if not an ID.
 
-sentinelInstanciate :: Cmd
-sentinelInstanciate = CmdInstanciate { cmdDomain = "reesd.com", cmdTitle = "" }
+sentinelInstances :: String -> Cmd
+sentinelInstances domain = CmdInstances { cmdDomain = domain }
 
-sentinelStep :: Cmd
-sentinelStep = CmdStep { cmdDomain = "reesd.com", cmdWalkId = 0 }
+sentinelInstanciate :: String -> Cmd
+sentinelInstanciate domain = CmdInstanciate { cmdDomain = domain, cmdTitle = "" }
+
+sentinelStep :: String -> Cmd
+sentinelStep domain = CmdStep { cmdDomain = domain, cmdWalkId = 0 }
+
+sentinelDelete :: String -> Cmd
+sentinelDelete domain = CmdDelete { cmdDomain = domain, cmdWalkId = 0 }
 
 
 ------------------------------------------------------------------------------
 flagDomain = flagReq ["domain"]
   (\x r -> Right (r { cmdDomain = x }))
   "DOMAIN"
-  "Domain to use, default to reesd.com."
+  "Domain to use, default to sntnl.co. Alternatively, set the SNTNL_DOMAIN \
+  \environment variable."

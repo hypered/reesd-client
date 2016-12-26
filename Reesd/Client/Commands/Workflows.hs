@@ -56,6 +56,9 @@ processCmd CmdStep{..} = (maybe call callFor cmdForUser)
     ++ maybe [] (\tag -> ["--tag", tag]) cmdTag
     -- TODO cmdResult
 
+processCmd CmdDelete{..} = (maybe call callFor cmdForUser)
+  "reesd.dev" "workflows" "delete" ["--walk", show cmdWalkId]
+
 processCmd CmdStatus{..} = call
   "reesd.dev" "workflows" "status" []
 
@@ -68,6 +71,7 @@ data Cmd =
   | CmdInstances { cmdForUser :: Maybe String, cmdSentinelsOnly :: Bool }
   | CmdInstanciate { cmdForUser :: Maybe String, cmdWorkflow :: String, cmdTitle :: Maybe String }
   | CmdStep { cmdForUser :: Maybe String, cmdWalkId :: Int, cmdActivity :: String, cmdResult :: Maybe String, cmdTag :: Maybe String }
+  | CmdDelete { cmdForUser :: Maybe String, cmdWalkId :: Int }
   | CmdStatus
   | Help
   | Version
@@ -84,6 +88,7 @@ workflowsModes = (modes "workflows" None "Workflows related subcommands."
   , workflowsInstancesMode
   , workflowsInstanciateMode
   , workflowsStepMode
+  , workflowsDeleteMode
   , workflowsStatusMode
   ])
   { modeGroupFlags = toGroup
@@ -138,6 +143,15 @@ workflowsStepMode = mode' "step" workflowsStep
         setActivity x r = Right (r { cmdActivity = x })
         setTag x r = Right (r { cmdTag = Just x })
 
+workflowsDeleteMode :: Mode Cmd
+workflowsDeleteMode = mode' "delete" workflowsDelete
+  "Delete a workflow instance."
+  [ flagReq ["walk"] setWalkId "ID"
+      "Workflow instance ID."
+  , forUserFlag
+  ]
+  where setWalkId x r = Right (r { cmdWalkId = read x }) -- TODO Left if not an ID.
+
 workflowsStatusMode :: Mode Cmd
 workflowsStatusMode = mode' "status" workflowsStatus
   "Display a list of repositories being updated."
@@ -152,5 +166,7 @@ workflowsInstances = CmdInstances { cmdForUser = Nothing, cmdSentinelsOnly = Fal
 workflowsInstanciate = CmdInstanciate { cmdForUser = Nothing, cmdWorkflow = "", cmdTitle = Nothing }
 
 workflowsStep = CmdStep { cmdForUser = Nothing, cmdWalkId = 0, cmdActivity = "", cmdResult = Nothing, cmdTag = Nothing }
+
+workflowsDelete = CmdDelete { cmdForUser = Nothing, cmdWalkId = 0 }
 
 workflowsStatus = CmdStatus
