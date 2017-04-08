@@ -59,7 +59,7 @@ processCmd CmdStep{..} = (maybe call callFor cmdForUser)
 processCmd CmdDelete{..} = (maybe call callFor cmdForUser)
   "reesd.dev" "workflows" "delete" ["--walk", show cmdWalkId]
 
-processCmd CmdStatus{..} = call
+processCmd CmdStatus = call
   "reesd.dev" "workflows" "status" []
 
 

@@ -33,9 +33,9 @@ processCmd None = do
   processCmd Version
   processCmd Help
 
-processCmd CmdList{..} = call "reesd.dev" "images" "list" []
+processCmd CmdList = call "reesd.dev" "images" "list" []
 
-processCmd CmdStatus{..} = call "reesd.dev" "images" "status" []
+processCmd CmdStatus = call "reesd.dev" "images" "status" []
 
 
 ------------------------------------------------------------------------------

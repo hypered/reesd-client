@@ -40,7 +40,7 @@ processCmd CmdCreate{..} = do
       content <- readFile path
       call' "reesd.dev" "users" "create" ["--login", cmdLogin, "--email", cmdEmail, "--public-key", "-"] content
 
-processCmd CmdStatus{..} = call "reesd.dev" "users" "status" []
+processCmd CmdStatus = call "reesd.dev" "users" "status" []
 
 
 ------------------------------------------------------------------------------
