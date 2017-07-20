@@ -7,8 +7,9 @@ module Main (main) where
 import Data.Version (showVersion)
 import Paths_reesd_client (version)
 import System.Console.CmdArgs.Explicit
-import System.Environment (getProgName)
+import System.Environment (getProgName, lookupEnv)
 
+import qualified Reesd.Client.Commands.Maintain as Maintain
 import qualified Reesd.Client.Commands.Images as Images
 import qualified Reesd.Client.Commands.Users as Users
 import qualified Reesd.Client.Commands.Workflows as Workflows
@@ -17,11 +18,17 @@ import qualified Reesd.Client.Commands.Workflows as Workflows
 ------------------------------------------------------------------------------
 main :: IO ()
 main = do
+  mdomain <- lookupEnv "REESD_DOMAIN"
+  case mdomain of
+    Just domain -> putStrLn ("REESD_DOMAIN is set to " ++ domain ++ ".")
+    _ -> return ()
+
   prog <- getProgName
   cmd <- case prog of
-    "rd"            -> processArgs allModes
-    "<interactive>" -> processArgs allModes      -- For ghci.
+    "rd"            -> processArgs (allModes mdomain)
+    "<interactive>" -> processArgs (allModes mdomain) -- For ghci.
     "rd-images"     -> processArgs imagesModes
+    "rd-maintain"   -> processArgs (maintainModes mdomain) -- TODO Pass mdomain to all xxxModes.
     "rd-users"      -> processArgs usersModes
     "rd-workflows"  -> processArgs workflowsModes
     -- TODO Implement the following and rd-sentinel.hs.
@@ -35,9 +42,10 @@ versionString :: String
 versionString =
   "rd " ++ showVersion version ++ " - Copyright 2016 Hypered SPRL."
 
-allModes :: Mode Cmd
-allModes = (modes "rd" None "Command-line client for Reesd."
-  [ imagesModes
+allModes :: Maybe String -> Mode Cmd
+allModes mdomain = (modes "rd" None "Command-line client for Reesd."
+  [ maintainModes mdomain -- TODO Display in --help only if some configuration says admin=yes.
+  , imagesModes
   , usersModes -- TODO Display in --help only if some configuration says admin=yes.
   , workflowsModes
   ])
@@ -51,15 +59,14 @@ allModes = (modes "rd" None "Command-line client for Reesd."
 ------------------------------------------------------------------------------
 -- | Process the command-line choice.
 processCmd :: Cmd -> IO ()
+processCmd (Maintain cmd) = Maintain.processCmd cmd
 processCmd (Images cmd) = Images.processCmd cmd
 processCmd (Users cmd) = Users.processCmd cmd
 processCmd (Workflows cmd) = Workflows.processCmd cmd
 
-processCmd Help = print (helpText [] HelpFormatDefault allModes)
+processCmd Help = print (helpText [] HelpFormatDefault (allModes Nothing))
 
-processCmd Version = do
-  putStrLn versionString
-  print (helpText [] HelpFormatDefault allModes)
+processCmd Version = putStrLn versionString
 
 processCmd None = do
   processCmd Version
@@ -73,7 +80,8 @@ processCmd UnkownProgramName = do
 ------------------------------------------------------------------------------
 -- | Available commands.
 data Cmd =
-    Images { getImages :: Images.Cmd }
+    Maintain { getMaintain :: Maintain.Cmd }
+  | Images { getImages :: Images.Cmd }
   | Users { getUsers :: Users.Cmd }
   | Workflows { getWorkflows :: Workflows.Cmd }
   | Help
@@ -81,6 +89,11 @@ data Cmd =
   | None
   | UnkownProgramName
   deriving Show
+
+maintainModes :: Maybe String -> Mode Cmd
+maintainModes mdomain =
+  remap2 Maintain getMaintain (Maintain.maintainModes mdomain)
+  { modeNames = ["maintain"] }
 
 imagesModes :: Mode Cmd
 imagesModes = remap2 Images getImages Images.imagesModes { modeNames = ["images"] }

@@ -10,6 +10,7 @@ import System.Process (createProcess, proc, readProcess, waitForProcess)
 
 ------------------------------------------------------------------------------
 -- | Call `reesd-command` through SSH.
+-- Normal user commands.
 call :: String -> String -> String -> [String] -> IO ()
 call domain command subcommand args = do
   (_, _, _, h) <- createProcess
@@ -17,6 +18,7 @@ call domain command subcommand args = do
   _ <- waitForProcess h
   return ()
 
+-- | Normal user commands, but called by the admin on their behalf.
 callFor :: String -> String -> String -> String -> [String] -> IO ()
 callFor user domain command subcommand args = do
   (_, _, _, h) <- createProcess
@@ -24,6 +26,15 @@ callFor user domain command subcommand args = do
   _ <- waitForProcess h
   return ()
 
+-- | Admin commands.
+callAdmin :: String -> String -> String -> [String] -> IO ()
+callAdmin domain command subcommand args = do
+  (_, _, _, h) <- createProcess
+    (proc "ssh" (["rdadmin@" ++ domain, "reesd-admin", command, subcommand] ++ args))
+  _ <- waitForProcess h
+  return ()
+
+-- Normal user commands.
 call' :: String -> String -> String -> [String] -> String -> IO ()
 call' domain command subcommand args input = do
   out <- readProcess
@@ -32,6 +43,7 @@ call' domain command subcommand args input = do
   putStr out
   return ()
 
+-- | Normal user commands, but called by the admin on their behalf.
 callFor' :: String -> String -> String -> String -> [String] -> String -> IO ()
 callFor' user domain command subcommand args input = do
   out <- readProcess
@@ -39,6 +51,16 @@ callFor' user domain command subcommand args input = do
     input
   putStr out
   return ()
+
+-- | Admin commands.
+callAdmin' :: String -> String -> String -> [String] -> String -> IO ()
+callAdmin' domain command subcommand args input = do
+  out <- readProcess
+    "ssh" (["rdadmin@" ++ domain, "reesd-admin", command, subcommand] ++ args)
+    input
+  putStr out
+  return ()
+
 
 ------------------------------------------------------------------------------
 class ForUser r where

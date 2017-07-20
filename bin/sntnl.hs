@@ -17,6 +17,7 @@ main = do
   case mdomain of
     Just domain -> putStrLn ("SNTNL_DOMAIN is set to " ++ domain ++ ".")
     _ -> return ()
+
   cmd <- processArgs (sentinelModes mdomain)
   case cmd of
     Sentinel.Help ->

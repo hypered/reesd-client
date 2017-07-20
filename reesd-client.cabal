@@ -20,7 +20,8 @@ library
                        base == 4.*,
                        cmdargs,
                        process
-  exposed-modules:     Reesd.Client.Commands.Images,
+  exposed-modules:     Reesd.Client.Commands.Maintain,
+                       Reesd.Client.Commands.Images,
                        Reesd.Client.Commands.Sentinel,
                        Reesd.Client.Commands.Users,
                        Reesd.Client.Commands.Workflows,
@@ -31,6 +32,14 @@ library
 executable rd
   hs-source-dirs:      bin
   main-is:             rd.hs
+  build-depends:       base == 4.*,
+                       cmdargs,
+                       reesd-client
+  ghc-options:         -Wall
+
+executable rd-maintain
+  hs-source-dirs:      bin
+  main-is:             rd-maintain.hs
   build-depends:       base == 4.*,
                        cmdargs,
                        reesd-client

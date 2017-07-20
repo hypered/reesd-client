@@ -12,7 +12,7 @@ import System.Console.CmdArgs.Explicit
   , HelpFormat(..), Mode(..)
   )
 
-import Reesd.Client.Helpers (call, call', mode')
+import Reesd.Client.Helpers (callAdmin, callAdmin', mode')
 
 
 ------------------------------------------------------------------------------
@@ -35,12 +35,16 @@ processCmd None = do
 
 processCmd CmdCreate{..} = do
   case cmdPublicKeyPath of
-    Nothing -> call "reesd.dev" "users" "create" ["--login", cmdLogin, "--email", cmdEmail]
+    Nothing ->
+      callAdmin "reesd.dev" "users" "create"
+        ["--login", cmdLogin, "--email", cmdEmail]
     Just path -> do
       content <- readFile path
-      call' "reesd.dev" "users" "create" ["--login", cmdLogin, "--email", cmdEmail, "--public-key", "-"] content
+      callAdmin' "reesd.dev" "users" "create"
+        ["--login", cmdLogin, "--email", cmdEmail, "--public-key", "-"]
+        content
 
-processCmd CmdStatus = call "reesd.dev" "users" "status" []
+processCmd CmdStatus = callAdmin "reesd.dev" "users" "status" []
 
 
 ------------------------------------------------------------------------------
